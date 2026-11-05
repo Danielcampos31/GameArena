@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GameArena · Panel del administrador</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="estilos.css" rel="stylesheet">
+
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-suelo"></div>
+  <div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <span class="logo">G</span>
+      <div>
+        <h1>GameArena · Panel del administrador</h1>
+        <small>Torneos, jugadores y videojuegos en un solo sitio</small>
+      </div>
+    </div>
+    <span id="conexion" class="badge text-bg-secondary">Sin conectar</span>
+  </div>
+</header>
+
+<main class="container contenido">
+
+  <ul class="nav nav-pills" id="menuPrincipal" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="tabTorneos" data-bs-toggle="tab" data-bs-target="#panelTorneos" type="button" role="tab">Torneos</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tabJugadores" data-bs-toggle="tab" data-bs-target="#panelJugadores" type="button" role="tab">Jugadores</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tabVideojuegos" data-bs-toggle="tab" data-bs-target="#panelVideojuegos" type="button" role="tab">Videojuegos</button>
+    </li>
+  </ul>
+
+  <!-- zona de avisos (verde, amarillo o rojo) -->
+  <div id="aviso" class="mb-3"></div>
+
+  <div class="tab-content">
+
+    <!-- ===================== TORNEOS ===================== -->
+    <section class="tab-pane fade show active" id="panelTorneos" role="tabpanel">
+      <div class="card mb-4">
+        <div class="card-header">Torneos</div>
+        <div class="card-body">
+
+          <!-- Filtrar torneos (extend) -->
+          <div class="row g-3 mb-2">
+            <div class="col-md-4">
+              <label for="filtroEstado" class="form-label">Estado</label>
+              <select id="filtroEstado" class="form-select">
+                <option value=""></option>
+                <option value="ABIERTO">ABIERTO</option>
+                <option value="EN_CURSO">EN_CURSO</option>
+                <option value="FINALIZADO">FINALIZADO</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label for="filtroVideojuego" class="form-label">Videojuego</label>
+              <select id="filtroVideojuego" class="form-select">
+                <option value=""></option>
+                <!-- opciones: salen de la lista de videojuegos (ya marcada en la pestaña Videojuegos) -->
+              </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="button" id="btnFiltrarTorneos" class="btn btn-outline-primary w-100">Filtrar</button>
+            </div>
+          </div>
+          <!-- GET /torneos?estado=: aquí se pintarán los torneos filtrados solo por estado -->
+          <!-- GET /torneos?videojuegoId=: aquí se pintarán los torneos filtrados solo por videojuego -->
+          <!-- GET /torneos?estado=&videojuegoId=: aquí se pintarán los torneos filtrados por estado y videojuego -->
+
+          <hr class="my-4 opacity-10">
+
+          <!-- Buscar por ID -->
+          <div class="row g-3 mb-1">
+            <div class="col-md-4">
+              <label for="buscarTorneoId" class="form-label">Buscar por ID</label>
+              <input type="number" id="buscarTorneoId" class="form-control">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="button" id="btnBuscarTorneo" class="btn btn-outline-primary w-100">Buscar</button>
+            </div>
+          </div>
+          <!-- GET /torneos/{id}: aquí se pintará un torneo por ID -->
+          <div id="resTorneo" class="mb-4"></div>
+
+          <!-- Lista (se rellena sola al abrir la pestaña) -->
+          <div class="tabla-wrap">
+            <table class="table table-hover" id="tablaTorneos">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre</th>
+                  <th>Videojuego</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="cuerpoTorneos">
+                <!-- GET /torneos: aquí se pintarán los torneos -->
+                <!-- cada fila lleva 3 botones (a la derecha): Participantes, Editar y Eliminar -->
+                <!-- el botón Participantes de cada fila abre el panel de participantes (su petición está en ese panel) -->
+                <!-- PUT /torneos/{id}: botón Editar de cada fila -->
+                <!-- DELETE /torneos/{id}: botón Eliminar de cada fila -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Crear / modificar torneo -->
+        <div class="col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">Torneo</div>
+            <div class="card-body">
+              <form id="formTorneo">
+                <div class="mb-3">
+                  <label for="tNombre" class="form-label">Nombre</label>
+                  <input type="text" id="tNombre" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                  <label for="tVideojuego" class="form-label">Videojuego</label>
+                  <select id="tVideojuego" class="form-select" required>
+                    <option value=""></option>
+                    <!-- opciones: salen de la lista de videojuegos (ya marcada en la pestaña Videojuegos) -->
+                  </select>
+                </div>
+                <div class="mb-4">
+                  <label for="tEstado" class="form-label">Estado</label>
+                  <select id="tEstado" class="form-select" required>
+                    <option value="ABIERTO">ABIERTO</option>
+                    <option value="EN_CURSO">EN_CURSO</option>
+                    <option value="FINALIZADO">FINALIZADO</option>
+                  </select>
+                </div>
+                <button type="button" id="btnTorneo" class="btn btn-success w-100">Crear torneo</button>
+                <!-- POST /torneos: aquí se creará el torneo nuevo -->
+                <!-- al pulsar Editar en una fila, este mismo formulario enviará el PUT de esa fila -->
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inscribir jugador en torneo -->
+        <div class="col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">Inscribir jugador en torneo</div>
+            <div class="card-body">
+              <form id="formInscripcion">
+                <div class="mb-3">
+                  <label for="iJugador" class="form-label">Jugador</label>
+                  <select id="iJugador" class="form-select" required>
+                    <option value=""></option>
+                    <!-- opciones: salen de la lista de jugadores (ya marcada en la pestaña Jugadores) -->
+                  </select>
+                </div>
+                <div class="mb-4">
+                  <label for="iTorneo" class="form-label">Torneo</label>
+                  <select id="iTorneo" class="form-select" required>
+                    <option value=""></option>
+                    <!-- opciones: salen de la lista de torneos (ya marcada arriba) -->
+                  </select>
+                </div>
+                <button type="button" id="btnInscribir" class="btn btn-success w-100">Inscribir</button>
+                <!-- POST /participaciones: aquí se inscribirá al jugador en el torneo -->
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Participantes del torneo (oculto al empezar) -->
+        <div class="col-12" id="panelParticipantesTorneo" hidden>
+          <div class="card">
+            <div class="card-header" id="tituloParticipantesTorneo">Participantes del torneo</div>
+            <div class="card-body">
+              <ul id="listaParticipantesTorneo" class="list-group list-group-flush">
+                <!-- GET /torneos/{id}/participaciones: aquí se pintará un jugador por línea -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== JUGADORES ===================== -->
+    <section class="tab-pane fade" id="panelJugadores" role="tabpanel">
+      <div class="card mb-4">
+        <div class="card-header">Jugadores</div>
+        <div class="card-body">
+
+          <!-- Buscar por ID -->
+          <div class="row g-3 mb-1">
+            <div class="col-md-4">
+              <label for="buscarJugadorId" class="form-label">Buscar por ID</label>
+              <input type="number" id="buscarJugadorId" class="form-control">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="button" id="btnBuscarJugador" class="btn btn-outline-primary w-100">Buscar</button>
+            </div>
+          </div>
+          <!-- GET /jugadores/{id}: aquí se pintará un jugador por ID -->
+          <div id="resJugador" class="mb-4"></div>
+
+          <!-- Lista (se rellena sola al abrir la pestaña) -->
+          <div class="tabla-wrap">
+            <table class="table table-hover" id="tablaJugadores">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Nivel</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="cuerpoJugadores">
+                <!-- GET /jugadores: aquí se pintarán los jugadores -->
+                <!-- cada fila lleva 3 botones (a la derecha): Torneos, Editar y Eliminar -->
+                <!-- PUT /jugadores/{id}: botón Editar de cada fila -->
+                <!-- DELETE /jugadores/{id}: botón Eliminar de cada fila -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <!-- Crear / modificar jugador -->
+        <div class="col-lg-6">
+          <div class="card h-100">
+            <div class="card-header">Jugador</div>
+            <div class="card-body">
+              <form id="formJugador">
+                <div class="mb-3">
+                  <label for="jNick" class="form-label">Nick</label>
+                  <input type="text" id="jNick" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                  <label for="jEmail" class="form-label">Email</label>
+                  <input type="email" id="jEmail" class="form-control" required>
+                </div>
+                <div class="mb-4">
+                  <label for="jNivel" class="form-label">Nivel</label>
+                  <input type="number" id="jNivel" class="form-control" required>
+                </div>
+                <button type="button" id="btnJugador" class="btn btn-success w-100">Crear jugador</button>
+                <!-- POST /jugadores: aquí se creará el jugador nuevo -->
+                <!-- al pulsar Editar en una fila, este mismo formulario enviará el PUT de esa fila -->
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Torneos del jugador (oculto al empezar) -->
+        <div class="col-lg-6" id="panelTorneosJugador" hidden>
+          <div class="card h-100">
+            <div class="card-header" id="tituloTorneosJugador">Torneos del jugador</div>
+            <div class="card-body">
+              <ul id="listaTorneosJugador" class="list-group list-group-flush">
+                <!-- GET /jugadores/{id}/participaciones: aquí se pintará un torneo por línea -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== VIDEOJUEGOS ===================== -->
+    <section class="tab-pane fade" id="panelVideojuegos" role="tabpanel">
+      <div class="card mb-4">
+        <div class="card-header">Videojuegos</div>
+        <div class="card-body">
+
+          <!-- Buscar por ID -->
+          <div class="row g-3 mb-1">
+            <div class="col-md-4">
+              <label for="buscarJuegoId" class="form-label">Buscar por ID</label>
+              <input type="number" id="buscarJuegoId" class="form-control">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <button type="button" id="btnBuscarJuego" class="btn btn-outline-primary w-100">Buscar</button>
+            </div>
+          </div>
+          <!-- GET /videojuegos/{id}: aquí se pintará un videojuego por ID -->
+          <div id="resJuego" class="mb-4"></div>
+
+          <!-- Lista (sin Editar ni Eliminar) -->
+          <div class="tabla-wrap">
+            <table class="table table-hover" id="tablaJuegos">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre</th>
+                </tr>
+              </thead>
+              <tbody id="cuerpoJuegos">
+                <!-- GET /videojuegos: aquí se pintarán los videojuegos -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Crear videojuego -->
+      <div class="row">
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-header">Videojuego</div>
+            <div class="card-body">
+              <form id="formJuego">
+                <div class="mb-4">
+                  <label for="vNombre" class="form-label">Nombre</label>
+                  <input type="text" id="vNombre" class="form-control" required>
+                </div>
+                <button type="button" id="btnJuego" class="btn btn-success w-100">Crear videojuego</button>
+                <!-- POST /videojuegos: aquí se creará el videojuego nuevo -->
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>GameArena · esqueleto de la página · IES Juan García Valdemora</footer>
+
+<canvas id="particulas" aria-hidden="true"></canvas>
+<script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
