@@ -276,3 +276,6 @@ footer::before {
   transform: scale(0); animation: onda .65s ease-out; pointer-events: none;
 }
 @keyframes onda { to { transform: scale(4); opacity: 0; } }
+
+#conexion.ok::before    { background: #22c55e; animation: none; box-shadow: 0 0 10px #22c55e; }
+#conexion.error::before { background: #ef4444; animation: none; box-shadow: 0 0 10px #ef4444; }
